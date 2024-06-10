@@ -21,13 +21,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*h9*$w@az=g-5pf8g7(42m_y9q0$1x_eggkax8%cudwmb^*$eh'
+SECRET_KEY = os.getenv('SECRET_KEY', 'a default-value for local dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
 
+APP_NAME = os.getenv("FLY_APP_NAME", None)
+
+DATABASE_PATH = os.getenv("DATABASE_PATH", None)
+
+CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
+
+ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
+
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
+
+DEBUG = False
+if ENVIRONMENT == 'local':
+    DEBUG = True
 
 # Application definition
 
@@ -43,17 +54,11 @@ INSTALLED_APPS = [
     'corsheaders'
 ]
 
-APP_NAME = os.getenv("FLY_APP_NAME", None)
-
-DATABASE_PATH = os.getenv("DATABASE_PATH", None)
-
-CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
-
-ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,7 +67,26 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:8080']
+APP_NAME = os.getenv("FLY_APP_NAME", None)
+
+DATABASE_PATH = os.getenv("DATABASE_PATH", None)
+CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+'default': {
+'BACKEND': "django.core.files.storage.FileSystemStorage",
+},
+"staticfiles": {
+"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+},
+}
+
+
+CORS_ALLOWED_ORIGINS = [
+'http://localhost:8080',
+'http://the-url-of-your-react-app'
+]
 
 CORS_ALLOW_METHODS = [
     'GET',
@@ -152,7 +176,7 @@ WSGI_APPLICATION = 'project_ranked.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DATABASE_PATH if APP_NAME else BASE_DIR / 'db.sqlite3',
     }
 }
 

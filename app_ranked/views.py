@@ -14,6 +14,7 @@ from .serializers import *
 @permission_classes([IsAuthenticated])
 def get_profile(request):
     user = request.user
+    print("user************************ ", user)
     profile = get_object_or_404(Profile, user=user)
     serializer = ProfileSerializer(profile)
     return Response(serializer.data)
@@ -92,3 +93,10 @@ def add_candidate_to_vote(request, vote_id):
     candidate.save()
     serializer = CandidateSerializer(candidate)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_users(request):
+    users = User.objects.all()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
