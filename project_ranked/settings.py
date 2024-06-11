@@ -14,8 +14,15 @@ from pathlib import Path
 from datetime import timedelta
 import os
 
+APP_NAME = os.getenv("FLY_APP_NAME", None)
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# if APP_NAME:
+#     MEDIA_ROOT = '/mnt/volume_mount/media/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -26,7 +33,6 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'a default-value for local dev')
 # SECURITY WARNING: don't run with debug turned on in production!
 
 
-APP_NAME = os.getenv("FLY_APP_NAME", None)
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", None)
 

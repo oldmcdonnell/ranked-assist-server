@@ -19,7 +19,7 @@ def get_profile(request):
     serializer = ProfileSerializer(profile)
     return Response(serializer.data)
 
-@api_view(['POST']) 
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def create_user(request):
     user = User.objects.create(
@@ -30,7 +30,8 @@ def create_user(request):
     profile = Profile.objects.create(
         user=user,
         first_name=request.data['first_name'],
-        last_name=request.data['last_name']
+        last_name=request.data['last_name'],
+        email=request.data['email'],
     )
     profile.save()
     profile_serialized = ProfileSerializer(profile)
