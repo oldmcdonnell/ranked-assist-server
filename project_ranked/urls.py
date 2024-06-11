@@ -34,6 +34,7 @@ urlpatterns = [
     path('list-candidates/<int:vote_id>/', list_candidates, name='list_candidates'),
     path('add-candidate-to-vote/<int:vote_id>/', add_candidate_to_vote, name='add_candidate_to_vote'),
     path('list-users/', list_users, name='list_users'),
+    path('fetch-candidates/', fetch_candidates, name='fetch_candidates'),
 ]
 
 if settings.DEBUG:
