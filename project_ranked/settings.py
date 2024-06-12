@@ -91,7 +91,7 @@ STORAGES = {
 
 CORS_ALLOWED_ORIGINS = [
 'http://localhost:8080',
-'http://the-url-of-your-react-app'
+'https://ranked-assist-client.vercel.app/'
 ]
 
 CORS_ALLOW_METHODS = [
