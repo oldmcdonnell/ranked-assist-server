@@ -22,19 +22,34 @@ from django.conf import settings
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
+
+    #AUTH AND ADMIN
     path('admin/', admin.site.urls),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('profile/', get_profile, name='get_profile'),
-    path('create-user/', create_user, name='create_user'),
+
+    #CANDIDATES
+    path('list-candidates/<int:vote_id>/', list_candidates, name='list_candidates'),
+    path('add-candidate-to-vote/<int:vote_id>/', add_candidate_to_vote, name='add_candidate_to_vote'),
+    path('fetch-candidates/', fetch_candidates, name='fetch_candidates'),
+    
+
+    # GROUPS
     path('create-friend-group/', create_friend_group, name='create_friend_group'),
     path('add-profile-to-group/<int:group_id>/', add_profile_to_group, name='add_profile_to_group'),
     path('list-friend-groups/', list_friend_groups, name='list_friend_groups'),
-    path('create-vote/', create_vote, name='create_vote'),
-    path('list-candidates/<int:vote_id>/', list_candidates, name='list_candidates'),
-    path('add-candidate-to-vote/<int:vote_id>/', add_candidate_to_vote, name='add_candidate_to_vote'),
+    path('list-my-groups/', list_my_groups, name='list_my_groups'),
+
+    #PROFILES
+    path('profile/', get_profile, name='get_profile'),
+    path('fetch-profiles/', fetch_profiles, name='fetch_profiles'),
+        
+    #USER
+    path('create-user/', create_user, name='create_user'),
     path('list-users/', list_users, name='list_users'),
-    path('fetch-candidates/', fetch_candidates, name='fetch_candidates'),
+
+    #VOTE
+    path('create-vote/', create_vote, name='create_vote'),
 ]
 
 if settings.DEBUG:

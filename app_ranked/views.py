@@ -77,13 +77,26 @@ def list_friend_groups(request):
     serializer = FriendsGroupSerializer(groups, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_my_groups(request):
+    profile = request.user.profile
+    groups = FriendsGroup.objects.filter(members=profile)
+    serializer = FriendsGroupSerializer(groups, many=True)
+    return Response(serializer.data)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_vote(request):
+    title = request.data.get('title')
+    description = request.data.get('description')
+    friends_group = request.data.get('friends_group')
+
     vote = Vote.objects.create(
-        rounds=request.data.get('rounds', 1)
+        title=title,
+        description=description,
+        friends_group=friends_group,
     )
-    vote.save()
     serializer = VoteSerializer(vote)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -122,4 +135,11 @@ def list_users(request):
 def fetch_candidates(request):
     users = Candidate.objects.all()
     serializer = CandidateSerializer()
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetch_profiles(request):
+    profiles = Profile.objects.all()
+    serializer = ProfileSerializer(profiles, many=True)
     return Response(serializer.data)
