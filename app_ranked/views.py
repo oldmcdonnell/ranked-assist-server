@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from .models import *
 from .serializers import *
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 @api_view(['GET'])
@@ -19,23 +21,35 @@ def get_profile(request):
     serializer = ProfileSerializer(profile)
     return Response(serializer.data)
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_user(request):
-    user = User.objects.create(
-        username=request.data['username']
-    )
-    user.set_password(request.data['password'])
-    user.save()
-    profile = Profile.objects.create(
-        user=user,
-        first_name=request.data['first_name'],
-        last_name=request.data['last_name'],
-        email=request.data['email'],
-    )
-    profile.save()
-    profile_serialized = ProfileSerializer(profile)
-    return Response(profile_serialized.data)
+    required_fields = ['username', 'password', 'first_name', 'last_name', 'email']
+    
+    for field in required_fields:
+        if field not in request.data:
+            return Response({'error': f'{field} is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.create(
+            username=request.data['username'],
+            email=request.data['email'],
+            first_name=request.data['first_name'],
+            last_name=request.data['last_name'],
+        )
+        user.set_password(request.data['password'])
+        user.save()
+
+        profile = Profile.objects.create(
+            user=user,
+        )
+        profile.save()
+
+        profile_serialized = ProfileSerializer(profile)
+        return Response(profile_serialized.data, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST']) 
 @permission_classes([IsAuthenticated])

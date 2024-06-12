@@ -7,17 +7,18 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-class VoteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Vote
-        fields = '__all__'
 
 class CandidateSerializer(serializers.ModelSerializer):
-    profile = serializers.StringRelatedField()
-    vote = serializers.StringRelatedField()
-
     class Meta:
         model = Candidate
+        fields = '__all__'
+
+class VoteSerializer(serializers.ModelSerializer):
+    candidates = CandidateSerializer(many=True, read_only=True)
+    author = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Vote
         fields = '__all__'
 
 class NestedProfileSerializer(serializers.ModelSerializer):
@@ -29,6 +30,7 @@ class NestedProfileSerializer(serializers.ModelSerializer):
 
 class FriendsGroupSerializer(serializers.ModelSerializer):
     members = NestedProfileSerializer(many=True, read_only=True)
+    votes = VoteSerializer(many=True, read_only=True)
 
     class Meta:
         model = FriendsGroup
@@ -37,12 +39,11 @@ class FriendsGroupSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     votes = serializers.SerializerMethodField()
-    friends = NestedProfileSerializer(source='friends_group.members', many=True, read_only=True)
+    friends_group = FriendsGroupSerializer(read_only=True)
 
     class Meta:
         model = Profile
         fields = '__all__'
 
-    def get_votes(self, obj):
-        votes = Vote.objects.filter(candidates__profile=obj)
-        return VoteSerializer(votes, many=True).data
+    def get_votes(self, request):
+        pass
