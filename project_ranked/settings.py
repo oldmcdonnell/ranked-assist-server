@@ -36,7 +36,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'a default-value for local dev')
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", None)
 
-CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
+CSRF_TRUSTED_ORIGINS = [f"https://*.{APP_NAME}.fly.dev", 'http://localhost:8080/*']
 
 ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
 
