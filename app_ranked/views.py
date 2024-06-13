@@ -89,13 +89,15 @@ def list_my_groups(request):
 @permission_classes([IsAuthenticated])
 def create_vote(request):
     title = request.data.get('title')
-    description = request.data.get('description')
-    friends_group = request.data.get('friends_group')
+    details = request.data.get('details')
+    friends_group = FriendsGroup.objects.get(id=request.data['friends_group'])
+    author = request.user
 
     vote = Vote.objects.create(
         title=title,
-        description=description,
+        details=details,
         friends_group=friends_group,
+        author=author,
     )
     serializer = VoteSerializer(vote)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
