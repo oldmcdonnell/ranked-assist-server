@@ -41,7 +41,7 @@ class Candidate(models.Model):
     description = models.TextField()
 
     def __str__(self):
-        return f'Candidate {self.description} for Vote {self.vote.title}'
+        return self.description
     
     @property
     def vote_info(self):
@@ -51,7 +51,7 @@ class Candidate(models.Model):
         }
 
 class FriendsGroup(models.Model):
-    title = models.CharField(max_length=100, default="Old Profile")
+    title = models.CharField(max_length=100, default="Group")
     members = models.ManyToManyField(Profile, related_name='groups')
     created_at = models.DateTimeField(auto_now_add=True)
     note = models.TextField(blank=True, null=True)

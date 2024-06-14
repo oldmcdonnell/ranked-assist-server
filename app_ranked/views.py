@@ -55,6 +55,7 @@ def create_user(request):
 @permission_classes([IsAuthenticated])
 def create_friend_group(request):
     friend_group = FriendsGroup.objects.create(
+        title=request.data.get('title'),
         note=request.data.get('note', '')
     )
     friend_group.save()
@@ -134,19 +135,19 @@ def create_vote(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def create_candidates(request):
+def create_candidate(request):
     print('test')
     vote = get_object_or_404(Vote, id=request.data['vote_id'])
     print('vote ID ', request.data['vote_id'])
     description = request.data['description']
     new_candidate = Candidate.objects.create(
-        vote,
-        description,
+        vote = vote,
+        description = description,
     )
-    serializers = CandidateSerializer(new_candidate)
+    serializers = CandidateSerializer(data = new_candidate.data)
     if serializers.is_valid():
         serializers.save()
-        return Response(serializers.data)
+        return Response(serializers.data, status=status.HTTP_201_CREATED)
     else:
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
     
