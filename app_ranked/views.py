@@ -105,9 +105,9 @@ def create_vote(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def create_candidates(request):
-    vote = Vote.objects.get(id=request.data['vote_id'])
+    vote = get_object_or_404(Vote, id=request.data['vote_id'])
     print('vote ID ', request.data['vote_id'])
-    # Check if vote already has candidates, in which case, you may want to update them
+
     if 'candidates' in request.data:
         new_candidates = request.data['candidates']
         updated_candidates = []
@@ -119,15 +119,17 @@ def create_candidates(request):
             )
             updated_candidates.append(candidate)
         
-        serializers = CandidateSerializer(updated_candidates, many=True)
-        return Response(serializers.data, status=status.HTTP_202_ACCEPTED)
-    elif 'vote_id' in request.data:
+        serializer = CandidateSerializer(updated_candidates, many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    elif 'vote_id' in request.data and 'description' in request.data:
         candidate = Candidate.objects.create(
             vote=vote,
-            description= request.data['description']
+            description=request.data['description']
         )
-        serializers - CandidateSerializer(candidate, many=True)
-        return Response(serializers.data, status=status.HTTP_201_CREATED)
+        serializer = CandidateSerializer(candidate)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response({'error': 'Invalid data provided'}, status=status.HTTP_400_BAD_REQUEST)
 
         
         
@@ -135,14 +137,6 @@ def create_candidates(request):
         return Response({'detail': 'No candidates data provided'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def list_candidates(request, vote_id):
-    vote = get_object_or_404(Vote, id=vote_id)
-    candidates = Candidate.objects.filter(vote=vote)
-    serializer = CandidateSerializer(candidates, many=True)
-    return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -169,11 +163,13 @@ def list_users(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def fetch_candidates(request):
+    vote_id = request.data.get('vote_id')
     print('*****************************************************', request.data['vote_id'])
     try:
-        vote = Vote.objects.get(id=request.data['vote_id'])
-        candidates = Candidate.objects.filter(vote = vote)
-        serializers = CandidateSerializer(candidates)
+        vote = get_object_or_404(Vote, id=vote_id)
+        candidates = Candidate.objects.filter(vote=vote)
+        print('**************************************************************', candidates)
+        serializers = CandidateSerializer(candidates, many=True)
         return Response(serializers.data)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
