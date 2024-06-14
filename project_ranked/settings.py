@@ -36,7 +36,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'a default-value for local dev')
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", None)
 
-CSRF_TRUSTED_ORIGINS = [f"https://*.{APP_NAME}.fly.dev", 'http://localhost:8080/*']
+CSRF_TRUSTED_ORIGINS = [f"https://*.{APP_NAME}.fly.dev"]
 
 ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
 
@@ -75,23 +75,21 @@ MIDDLEWARE = [
 
 APP_NAME = os.getenv("FLY_APP_NAME", None)
 
-DATABASE_PATH = os.getenv("DATABASE_PATH", None)
-CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {
-'default': {
-'BACKEND': "django.core.files.storage.FileSystemStorage",
-},
-"staticfiles": {
-"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-},
+    'default': {
+        'BACKEND': "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
 }
 
 
 CORS_ALLOWED_ORIGINS = [
-'http://localhost:8080',
-'https://ranked-assist-client.vercel.app'
+    'http://localhost:8080',
+    'https://ranked-assist-client.vercel.app'
 ]
 
 CORS_ALLOW_METHODS = [
@@ -111,48 +109,45 @@ CORS_ALLOW_HEADERS = [
 
 
 REST_FRAMEWORK = {
-'DEFAULT_AUTHENTICATION_CLASSES': [
-'rest_framework.authentication.SessionAuthentication',
-'rest_framework_simplejwt.authentication.JWTAuthentication',
-],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
 
-
-'DEFAULT_PERMISSION_CLASSES': [
-'rest_framework.permissions.IsAuthenticated',
-]
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
 
 
 SIMPLE_JWT = {
-"ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
-"REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-"ROTATE_REFRESH_TOKENS": True,
-"BLACKLIST_AFTER_ROTATION": True,
-"UPDATE_LAST_LOGIN": False,
-"ALGORITHM": "HS256",
-"SIGNING_KEY": SECRET_KEY,
-"VERIFYING_KEY": "",
-"AUDIENCE": None,
-"ISSUER": None,
-"JSON_ENCODER": None,
-"JWK_URL": None,
-"LEEWAY": 0,
-"AUTH_HEADER_TYPES": ("Bearer",),
-"AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-"USER_ID_FIELD": "id",
-"USER_ID_CLAIM": "user_id",
-"USER_AUTHENTICATION_RULE":
-"rest_framework_simplejwt.authentication.default_user_authentication_rule",
-"AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-"TOKEN_TYPE_CLAIM": "token_type",
-"TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-"JTI_CLAIM": "jti",
-"SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-"SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
-"SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": "",
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE":
+    "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
-
-
 
 
 ROOT_URLCONF = 'project_ranked.urls'
