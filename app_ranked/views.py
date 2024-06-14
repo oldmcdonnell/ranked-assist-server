@@ -103,53 +103,52 @@ def create_vote(request):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# @api_view(['PUT'])
-# @permission_classes([IsAuthenticated])
-# def create_candidates(request):
-#     vote = get_object_or_404(Vote, id=request.data['vote_id'])
-#     print('vote ID ', request.data['vote_id'])
-
-#     if 'candidates' in request.data:
-#         new_candidates = request.data['candidates']
-#         updated_candidates = []
-#         for candidate_data in new_candidates:
-#             candidate, created = Candidate.objects.update_or_create(
-#                 vote=vote,
-#                 id=candidate_data.get('id'),
-#                 defaults={'description': candidate_data['description']}
-#             )
-#             updated_candidates.append(candidate)
-        
-#         serializer = CandidateSerializer(updated_candidates, many=True)
-#         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-#     elif 'vote_id' in request.data and 'description' in request.data:
-#         candidate = Candidate.objects.create(
-#             vote=vote,
-#             description=request.data['description']
-#         )
-#         serializer = CandidateSerializer(candidate)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     else:
-#         return Response({'error': 'Invalid data provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def create_candidate(request):
-    print('test')
     vote = get_object_or_404(Vote, id=request.data['vote_id'])
     print('vote ID ', request.data['vote_id'])
-    description = request.data['description']
-    new_candidate = Candidate.objects.create(
-        vote = vote,
-        description = description,
-    )
-    serializers = CandidateSerializer(data = new_candidate.data)
-    if serializers.is_valid():
-        serializers.save()
-        return Response(serializers.data, status=status.HTTP_201_CREATED)
+    if 'candidates' in request.data:
+        new_candidates = request.data['candidates']
+        updated_candidates = []
+        for candidate_data in new_candidates:
+            candidate, created = Candidate.objects.update_or_create(
+                vote=vote,
+                id=candidate_data.get('id'),
+                defaults={'description': candidate_data['description']}
+            )
+            updated_candidates.append(candidate)
+        
+        serializer = CandidateSerializer(updated_candidates, many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    elif 'vote_id' in request.data and 'description' in request.data:
+        candidate = Candidate.objects.create(
+            vote=vote,
+            description=request.data['description']
+        )
+        serializer = CandidateSerializer(candidate)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
-        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid data provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def create_candidate(request):
+#     print('test')
+#     vote = get_object_or_404(Vote, id=request.data['vote_id'])
+#     print('vote ID ', request.data['vote_id'])
+#     description = request.data['description']
+#     new_candidate = Candidate.objects.create(
+#         vote = vote,
+#         description = description,
+#     )
+#     serializers = CandidateSerializer(data = new_candidate)
+#     if serializers.is_valid():
+#         serializers.save()
+#         return Response(serializers.data, status=status.HTTP_201_CREATED)
+#     else:
+#         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 @api_view(['POST'])
