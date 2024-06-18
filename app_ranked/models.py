@@ -9,6 +9,15 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
+class FriendsGroup(models.Model):
+    title = models.CharField(max_length=100, default="Group")
+    members = models.ManyToManyField(Profile, related_name='groups')
+    created_at = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f'Group {self.title}'
+
 class Vote(models.Model):
     title = models.CharField(max_length=255)
     details = models.TextField(null=True, blank=True)
@@ -19,26 +28,15 @@ class Vote(models.Model):
     polls_close = models.DateTimeField(blank=True, null=True)
     open_enrollment = models.BooleanField(default=True)
     polls_open = models.BooleanField(default=True)
-    friends_group = models.ForeignKey('FriendsGroup', on_delete=models.CASCADE, related_name='votes')
+    friends_group = models.ForeignKey(FriendsGroup, on_delete=models.CASCADE, related_name='votes')
 
     def __str__(self):
         return f'Vote {self.title} for {self.friends_group.title}'
-    
-    # def save(self, *args, **kwargs):
-    #     if self.polls_close:
-    #         # Make sure polls_close is timezone-aware
-    #         if timezone.is_naive(self.polls_close):
-    #             self.polls_close = timezone.make_aware(self.polls_close, timezone.get_current_timezone())
-
-    #         # Check if the current time is past the polls_close time
-    #         if timezone.now() > self.polls_close:
-    #             self.polls_open = False
-
-    #     super().save(*args, **kwargs)
 
 class Candidate(models.Model):
     vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='candidates')
     description = models.TextField()
+    votes = models.IntegerField(default=0)
 
     def __str__(self):
         return self.description
@@ -50,11 +48,20 @@ class Candidate(models.Model):
             'vote_count': self.vote.count
         }
 
-class FriendsGroup(models.Model):
-    title = models.CharField(max_length=100, default="Group")
-    members = models.ManyToManyField(Profile, related_name='groups')
-    created_at = models.DateTimeField(auto_now_add=True)
-    note = models.TextField(blank=True, null=True)
+class Voter(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='voter')
+    vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='voters')
 
     def __str__(self):
-        return f'Group {self.title} created at {self.created_at}'
+        return f'Voter {self.user.username} for {self.vote.title}'
+
+class Preference(models.Model):
+    voter = models.ForeignKey(Voter, on_delete=models.CASCADE, related_name='preferences')
+    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name='preferences')
+    rank = models.IntegerField()
+
+    class Meta:
+        unique_together = ('voter', 'rank')
+
+    def __str__(self):
+        return f'{self.voter.user.username} ranks {self.candidate.description} as {self.rank}'

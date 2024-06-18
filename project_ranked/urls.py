@@ -49,8 +49,9 @@ urlpatterns = [
     path('list-users/', list_users, name='list_users'),
 
     #VOTE
-    # path('update-vote/', update_vote),
+    path('update-vote/', update_vote),
     path('create-vote/', create_vote, name='create_vote'),
+    path('vote-results/', vote_results, name='vote_results'),
     
 ]
 

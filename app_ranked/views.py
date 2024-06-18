@@ -1,3 +1,4 @@
+from collections import defaultdict
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -102,6 +103,61 @@ def create_vote(request):
     serializer = VoteSerializer(vote)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def vote_results(request):
+    vote = get_object_or_404(Vote, id=request.data['vote_id'])
+    candidates = Candidate.objects.filter(vote=vote)
+    
+    # Initial vote count
+    vote_count = defaultdict(int)
+    for candidate in candidates:
+        vote_count[candidate.id] = candidate.votes
+
+    total_votes = sum(vote_count.values())
+    majority_threshold = total_votes / 2
+
+    # Round-based elimination
+    round_number = 1
+    while True:
+        print(f"Round {round_number} processing...")
+        
+        # Check if any candidate has more than 50% of the votes
+        for candidate_id, count in vote_count.items():
+            if count > majority_threshold:
+                winner = Candidate.objects.get(id=candidate_id)
+                return Response({'winner': winner.description, 'round': round_number, 'votes': count})
+        
+        # Find the candidate with the least votes
+        min_votes = min(vote_count.values())
+        eliminated_candidates = [candidate_id for candidate_id, count in vote_count.items() if count == min_votes]
+        
+        # If all candidates have the same votes, it's a tie
+        if len(eliminated_candidates) == len(candidates):
+            return Response({'result': 'tie', 'round': round_number})
+        
+        # Eliminate the candidate with the least votes and redistribute their votes
+        for candidate_id in eliminated_candidates:
+            eliminated_candidate = Candidate.objects.get(id=candidate_id)
+            redistributed_votes = vote_count[candidate_id]
+            
+            # Redistribute votes to the remaining candidates based on the next preferences
+            for voter in eliminated_candidate.voters.all():
+                next_choice = get_next_choice(voter, eliminated_candidates)
+                if next_choice:
+                    vote_count[next_choice] += 1
+            
+            # Remove the eliminated candidate from the count
+            del vote_count[candidate_id]
+        
+        round_number += 1
+
+def get_next_choice(voter, eliminated_candidates):
+    preferences = voter.preferences.order_by('rank')
+    for preference in preferences:
+        if preference.candidate.id not in eliminated_candidates:
+            return preference.candidate.id
+    return None
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -194,3 +250,43 @@ def fetch_profiles(request):
     profiles = Profile.objects.all()
     serializer = ProfileSerializer(profiles, many=True)
     return Response(serializer.data)
+
+
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from .models import Vote, Candidate
+from .serializers import VoteSerializer, CandidateSerializer
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_vote(request):
+    vote_id = request.data.get('vote_id')
+    vote = get_object_or_404(Vote, id=vote_id)
+
+    candidates_data = request.data.get('candidates', [])
+    updated_candidates = []
+
+    for candidate_data in candidates_data:
+        candidate_id = candidate_data.get('id')
+        candidate = get_object_or_404(Candidate, id=candidate_id)
+        candidate.count = candidate_data.get('count', candidate.count)
+        candidate.round = candidate_data.get('round', candidate.round)
+        candidate.save()
+        updated_candidates.append(candidate)
+
+    vote.round = request.data.get('round', vote.round)
+    vote.count = request.data.get('count', vote.count)
+    vote.save()
+
+    vote_serializer = VoteSerializer(vote)
+    candidates_serializer = CandidateSerializer(updated_candidates, many=True)
+
+    response_data = {
+        'vote': vote_serializer.data,
+        'candidates': candidates_serializer.data
+    }
+
+    return Response(response_data, status=status.HTTP_202_ACCEPTED)
