@@ -23,7 +23,7 @@ class Vote(models.Model):
     details = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     round = models.IntegerField(default=0)
-    count = models.IntegerField(default=0)
+    count = models.IntegerField(default=0, unique=False)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
     polls_close = models.DateTimeField(blank=True, null=True)
     open_enrollment = models.BooleanField(default=True)
@@ -36,7 +36,9 @@ class Vote(models.Model):
 class Candidate(models.Model):
     vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='candidates')
     description = models.TextField()
+    # rank = models.IntegerField(default=00)
     votes = models.IntegerField(default=0)
+    #one to one with votes list [0, 13, 0]
 
     def __str__(self):
         return self.description
@@ -57,8 +59,9 @@ class Voter(models.Model):
 
 class Preference(models.Model):
     voter = models.ForeignKey(Voter, on_delete=models.CASCADE, related_name='preferences')
+    vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='preferences')
     candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name='preferences')
-    rank = models.IntegerField()
+    rank = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ('voter', 'rank')

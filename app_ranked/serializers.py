@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Profile, FriendsGroup, Vote, Candidate
+from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,3 +47,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_votes(self, request):
         pass
+
+class PreferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Preference
+        fields = '__all__'

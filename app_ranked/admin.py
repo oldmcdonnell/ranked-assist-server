@@ -14,7 +14,12 @@ class CandidateAdmin(admin.ModelAdmin):
 class VoteAdmin(admin.ModelAdmin):
   pass
 
+
+class PreferenceGroupAdmin(admin.ModelAdmin):
+  pass
+
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(FriendsGroup, FriendsGroupAdmin)
 admin.site.register(Candidate, CandidateAdmin)
 admin.site.register(Vote, VoteAdmin)
+admin.site.register(Preference, PreferenceGroupAdmin)

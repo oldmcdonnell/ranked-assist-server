@@ -244,6 +244,8 @@ def fetch_candidates(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def fetch_profiles(request):
@@ -259,6 +261,54 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import Vote, Candidate
 from .serializers import VoteSerializer, CandidateSerializer
+
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from .models import Vote, Candidate, Preference, Voter
+from .serializers import PreferenceSerializer
+from rest_framework import status
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_preference(request):
+    vote_id = request.data.get('vote_id')
+    if not vote_id:
+        return Response({'error': 'vote_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    vote = get_object_or_404(Vote, id=vote_id)
+    voter, created = Voter.objects.get_or_create(user=request.user, vote=vote)
+    
+    if 'rank' in request.data:
+        rank_data = request.data['rank']
+        updated_rank = []
+        
+        for preference_data in rank_data:
+            print('*************************preference data******************', preference_data)
+            candidate_id = preference_data.get('candidate_id')
+            rank = preference_data.get('rank')
+            
+            if not candidate_id or not rank:
+                return Response({'error': 'candidate_id and rank are required for each preference'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            candidate = get_object_or_404(Candidate, id=candidate_id, vote=vote)
+            print('****************various opbjects********', voter, candidate, vote, rank)
+            preference, created = Preference.objects.update_or_create(
+                voter=voter,
+                candidate=candidate,
+                vote=vote,
+                rank = rank,
+            )
+            updated_rank.append(preference)
+        
+        serializer = PreferenceSerializer(updated_rank, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response({'error': 'No rank data provided'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

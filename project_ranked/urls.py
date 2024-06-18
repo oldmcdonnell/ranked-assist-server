@@ -52,7 +52,7 @@ urlpatterns = [
     path('update-vote/', update_vote),
     path('create-vote/', create_vote, name='create_vote'),
     path('vote-results/', vote_results, name='vote_results'),
-    
+    path('create-preference/', create_preference, name='create_preference'),
 ]
 
 if settings.DEBUG:
