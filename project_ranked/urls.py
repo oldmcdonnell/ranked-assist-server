@@ -53,6 +53,10 @@ urlpatterns = [
     path('create-vote/', create_vote, name='create_vote'),
     path('vote-results/', vote_results, name='vote_results'),
     path('create-preference/', create_preference, name='create_preference'),
+    path('close-enrollment/<int:vote_id>/', close_enrollment, name='close_enrollment'),
+    path('toggle-polls/<int:vote_id>/', toggle_polls, name='toggle_polls'),
+    path('my-votes/', my_votes, name='my_votes'),
+    path('delete-vote/', delete_vote, name='delete_vote'),
 ]
 
 if settings.DEBUG:

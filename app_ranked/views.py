@@ -351,3 +351,40 @@ def update_vote(request):
     }
 
     return Response(response_data, status=status.HTTP_202_ACCEPTED)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def close_enrollment(request, vote_id):
+    vote = get_object_or_404(Vote, id=vote_id, author=request.user)
+    vote.open_enrollment = False
+    vote.save()
+    return Response(VoteSerializer(vote).data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_polls(request, vote_id):
+    vote = get_object_or_404(Vote, id=vote_id, author=request.user)
+    vote.polls_open = not vote.polls_open
+    vote.save()
+    return Response(VoteSerializer(vote).data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_votes(request):
+    votes = Vote.objects.filter(author=request.user)
+    serializer = VoteSerializer(votes, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_vote(request):
+    vote_id = request.data.get('vote_id')
+    if not vote_id:
+        return Response({'error': 'vote_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    vote = get_object_or_404(Vote, id=vote_id, author=request.user)
+    vote.delete()
+    return Response({'message': 'Vote deleted successfully'}, status=status.HTTP_200_OK)
