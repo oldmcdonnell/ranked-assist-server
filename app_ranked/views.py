@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -106,58 +106,69 @@ def create_vote(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def vote_results(request):
-    vote = get_object_or_404(Vote, id=request.data['vote_id'])
-    candidates = Candidate.objects.filter(vote=vote)
+    vote_id = request.data.get('vote_id')
+    vote = get_object_or_404(Vote, id=vote_id)
+    preferences = Preference.objects.filter(candidate__vote=vote).select_related('voter', 'candidate')
     
-    # Initial vote count
-    vote_count = defaultdict(int)
-    for candidate in candidates:
-        vote_count[candidate.id] = candidate.votes
+    vote_count = Counter()
+    results = defaultdict(list)
 
+    # Initialize the first round of vote counts
+    for preference in preferences:
+        if preference.rank == 1:
+            vote_count[preference.candidate.description] += 1
+
+    round_results = [dict(vote_count)]
     total_votes = sum(vote_count.values())
     majority_threshold = total_votes / 2
-
-    # Round-based elimination
     round_number = 1
+
     while True:
         print(f"Round {round_number} processing...")
         
         # Check if any candidate has more than 50% of the votes
-        for candidate_id, count in vote_count.items():
+        for candidate, count in vote_count.items():
             if count > majority_threshold:
-                winner = Candidate.objects.get(id=candidate_id)
-                return Response({'winner': winner.description, 'round': round_number, 'votes': count})
+                return Response({
+                    'winner': candidate,
+                    'round': round_number,
+                    'vote_counts': round_results,
+                    'final_votes': vote_count
+                }, status=status.HTTP_200_OK)
         
         # Find the candidate with the least votes
         min_votes = min(vote_count.values())
-        eliminated_candidates = [candidate_id for candidate_id, count in vote_count.items() if count == min_votes]
+        eliminated_candidates = [candidate for candidate, count in vote_count.items() if count == min_votes]
         
         # If all candidates have the same votes, it's a tie
-        if len(eliminated_candidates) == len(candidates):
-            return Response({'result': 'tie', 'round': round_number})
+        if len(eliminated_candidates) == len(vote_count):
+            return Response({
+                'result': 'tie',
+                'round': round_number,
+                'vote_counts': round_results,
+                'final_votes': vote_count
+            }, status=status.HTTP_200_OK)
         
         # Eliminate the candidate with the least votes and redistribute their votes
-        for candidate_id in eliminated_candidates:
-            eliminated_candidate = Candidate.objects.get(id=candidate_id)
-            redistributed_votes = vote_count[candidate_id]
-            
-            # Redistribute votes to the remaining candidates based on the next preferences
-            for voter in eliminated_candidate.voters.all():
-                next_choice = get_next_choice(voter, eliminated_candidates)
-                if next_choice:
-                    vote_count[next_choice] += 1
+        for eliminated_candidate in eliminated_candidates:
+            eliminated_candidate_preferences = Preference.objects.filter(candidate__description=eliminated_candidate, vote=vote)
+            for preference in eliminated_candidate_preferences:
+                next_preference = Preference.objects.filter(voter=preference.voter, vote=vote, rank=preference.rank + 1).first()
+                if next_preference:
+                    vote_count[next_preference.candidate.description] += 1
             
             # Remove the eliminated candidate from the count
-            del vote_count[candidate_id]
+            del vote_count[eliminated_candidate]
         
         round_number += 1
+        round_results.append(dict(vote_count))
 
-def get_next_choice(voter, eliminated_candidates):
-    preferences = voter.preferences.order_by('rank')
-    for preference in preferences:
-        if preference.candidate.id not in eliminated_candidates:
-            return preference.candidate.id
-    return None
+    return Response({
+        'result': 'tie',
+        'round': round_number,
+        'vote_counts': round_results,
+        'final_votes': vote_count
+    }, status=status.HTTP_200_OK)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
