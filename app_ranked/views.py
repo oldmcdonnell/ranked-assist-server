@@ -42,8 +42,14 @@ def create_user(request):
         user.set_password(request.data['password'])
         user.save()
 
+        try:
+            friends_group = FriendsGroup.objects.get(id=1)
+        except FriendsGroup.DoesNotExist:
+            return Response({'error': 'FriendsGroup with id 1 does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
         profile = Profile.objects.create(
             user=user,
+            friends_group=friends_group
         )
         profile.save()
 
@@ -198,24 +204,6 @@ def create_candidate(request):
     else:
         return Response({'error': 'Invalid data provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def create_candidate(request):
-#     print('test')
-#     vote = get_object_or_404(Vote, id=request.data['vote_id'])
-#     print('vote ID ', request.data['vote_id'])
-#     description = request.data['description']
-#     new_candidate = Candidate.objects.create(
-#         vote = vote,
-#         description = description,
-#     )
-#     serializers = CandidateSerializer(data = new_candidate)
-#     if serializers.is_valid():
-#         serializers.save()
-#         return Response(serializers.data, status=status.HTTP_201_CREATED)
-#     else:
-#         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 @api_view(['POST'])
@@ -237,6 +225,14 @@ def add_candidate_to_vote(request, vote_id):
 def list_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetch_profiles(request):
+    profiles = Profile.objects.all()
+    serializer = ProfileSerializer(profiles, many=True)
     return Response(serializer.data)
 
 
@@ -265,23 +261,6 @@ def fetch_profiles(request):
     return Response(serializer.data)
 
 
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .models import Vote, Candidate
-from .serializers import VoteSerializer, CandidateSerializer
-
-
-
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .models import Vote, Candidate, Preference, Voter
-from .serializers import PreferenceSerializer
-from rest_framework import status
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

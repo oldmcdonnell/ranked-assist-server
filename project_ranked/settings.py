@@ -89,7 +89,7 @@ STORAGES = {
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8080',
-    'https://ranked-assist-client.vercel.app'
+    'https://preferred-polls.vercel.app'
 ]
 
 CORS_ALLOW_METHODS = [
