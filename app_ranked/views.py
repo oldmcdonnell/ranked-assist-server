@@ -1,3 +1,4 @@
+from django.core.mail import send_mail
 from collections import defaultdict, Counter
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
@@ -340,6 +341,7 @@ def close_enrollment(request, vote_id):
     vote.open_enrollment = False
     vote.save()
     return Response(VoteSerializer(vote).data, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
