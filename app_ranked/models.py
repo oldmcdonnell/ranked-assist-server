@@ -1,36 +1,70 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    email = models.EmailField()
     friends_group = models.ForeignKey('FriendsGroup', on_delete=models.SET_NULL, null=True, blank=True, related_name='profiles')
 
     def __str__(self):
         return self.user.username
 
 class FriendsGroup(models.Model):
-    members = models.ManyToManyField(Profile, related_name='group')
+    title = models.CharField(max_length=100, default="Group")
+    members = models.ManyToManyField(Profile, related_name='groups')
     created_at = models.DateTimeField(auto_now_add=True)
     note = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f'Friends Group {self.id} created at {self.created_at}'
+        return f'Group {self.title}'
 
 class Vote(models.Model):
+    title = models.CharField(max_length=255)
+    details = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    rounds = models.IntegerField(default=0 )
-    count = models.IntegerField(default=0)
+    round = models.IntegerField(default=0)
+    count = models.IntegerField(default=0, unique=False)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
+    polls_close = models.DateTimeField(blank=True, null=True)
+    open_enrollment = models.BooleanField(default=True)
+    polls_open = models.BooleanField(default=True)
+    friends_group = models.ForeignKey(FriendsGroup, on_delete=models.CASCADE, related_name='votes')
 
     def __str__(self):
-        return f'Vote created at {self.created_at} with {self.rounds} rounds'
+        return f'Vote {self.title} for {self.friends_group.title}'
 
 class Candidate(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='candidates')
-    votes = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='candidates')
+    vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='candidates')
     description = models.TextField()
+    # rank = models.IntegerField(default=00)
+    votes = models.IntegerField(default=0)
+    #one to one with votes list [0, 13, 0]
 
     def __str__(self):
-        return f'Candidate {self.profile.user.username} for Vote {self.vote.id}'
+        return self.description
+    
+    @property
+    def vote_info(self):
+        return {
+            'vote_round': self.vote.round,
+            'vote_count': self.vote.count
+        }
+
+class Voter(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='voter')
+    vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='voters')
+
+    def __str__(self):
+        return f'Voter {self.user.username} for {self.vote.title}'
+
+class Preference(models.Model):
+    voter = models.ForeignKey(Voter, on_delete=models.CASCADE, related_name='preferences')
+    vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='preferences')
+    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name='preferences')
+    rank = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('voter', 'rank')
+
+    def __str__(self):
+        return f'{self.voter.user.username} ranks {self.candidate.description} as {self.rank}'

@@ -14,20 +14,37 @@ from pathlib import Path
 from datetime import timedelta
 import os
 
+APP_NAME = os.getenv("FLY_APP_NAME", None)
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# if APP_NAME:
+#     MEDIA_ROOT = '/mnt/volume_mount/media/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*h9*$w@az=g-5pf8g7(42m_y9q0$1x_eggkax8%cudwmb^*$eh'
+SECRET_KEY = os.getenv('SECRET_KEY', 'a default-value for local dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
 
+
+DATABASE_PATH = os.getenv("DATABASE_PATH", None)
+
+CSRF_TRUSTED_ORIGINS = [f"https://*.{APP_NAME}.fly.dev"]
+
+ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
+
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
+
+DEBUG = False
+if ENVIRONMENT == 'local':
+    DEBUG = True
 
 # Application definition
 
@@ -43,17 +60,11 @@ INSTALLED_APPS = [
     'corsheaders'
 ]
 
-APP_NAME = os.getenv("FLY_APP_NAME", None)
-
-DATABASE_PATH = os.getenv("DATABASE_PATH", None)
-
-CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
-
-ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,7 +73,24 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:8080']
+APP_NAME = os.getenv("FLY_APP_NAME", None)
+
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    'default': {
+        'BACKEND': "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8080',
+    'https://preferred-polls.vercel.app'
+]
 
 CORS_ALLOW_METHODS = [
     'GET',
@@ -81,48 +109,45 @@ CORS_ALLOW_HEADERS = [
 
 
 REST_FRAMEWORK = {
-'DEFAULT_AUTHENTICATION_CLASSES': [
-'rest_framework.authentication.SessionAuthentication',
-'rest_framework_simplejwt.authentication.JWTAuthentication',
-],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
 
-
-'DEFAULT_PERMISSION_CLASSES': [
-'rest_framework.permissions.IsAuthenticated',
-]
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
 
 
 SIMPLE_JWT = {
-"ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
-"REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-"ROTATE_REFRESH_TOKENS": True,
-"BLACKLIST_AFTER_ROTATION": True,
-"UPDATE_LAST_LOGIN": False,
-"ALGORITHM": "HS256",
-"SIGNING_KEY": SECRET_KEY,
-"VERIFYING_KEY": "",
-"AUDIENCE": None,
-"ISSUER": None,
-"JSON_ENCODER": None,
-"JWK_URL": None,
-"LEEWAY": 0,
-"AUTH_HEADER_TYPES": ("Bearer",),
-"AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-"USER_ID_FIELD": "id",
-"USER_ID_CLAIM": "user_id",
-"USER_AUTHENTICATION_RULE":
-"rest_framework_simplejwt.authentication.default_user_authentication_rule",
-"AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-"TOKEN_TYPE_CLAIM": "token_type",
-"TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-"JTI_CLAIM": "jti",
-"SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-"SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
-"SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": "",
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE":
+    "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
-
-
 
 
 ROOT_URLCONF = 'project_ranked.urls'
@@ -152,7 +177,7 @@ WSGI_APPLICATION = 'project_ranked.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DATABASE_PATH if APP_NAME else BASE_DIR / 'db.sqlite3',
     }
 }
 
