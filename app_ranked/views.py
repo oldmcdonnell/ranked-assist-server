@@ -45,6 +45,7 @@ def create_user(request):
 
         try:
             friends_group = FriendsGroup.objects.get(id=1)
+            print('FriendsGroup found:', friends_group)
         except FriendsGroup.DoesNotExist:
             return Response({'error': 'FriendsGroup with id 1 does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -57,6 +58,7 @@ def create_user(request):
         profile_serialized = ProfileSerializer(profile)
         return Response(profile_serialized.data, status=status.HTTP_201_CREATED)
     except Exception as e:
+        print('Exception:', str(e))
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST']) 
@@ -119,13 +121,22 @@ def create_vote(request):
     serializer = VoteSerializer(vote)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def vote_results(request):
     vote_id = request.data.get('vote_id')
+    if not vote_id:
+        return Response({'error': 'vote_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
     vote = get_object_or_404(Vote, id=vote_id)
     preferences = Preference.objects.filter(candidate__vote=vote).select_related('voter', 'candidate')
     
+    if not preferences.exists():
+        return Response({'error': 'No preferences found for this vote.'}, status=status.HTTP_400_BAD_REQUEST)
+
     vote_count = Counter()
     results = defaultdict(list)
 
@@ -133,6 +144,9 @@ def vote_results(request):
     for preference in preferences:
         if preference.rank == 1:
             vote_count[preference.candidate.description] += 1
+
+    if not vote_count:
+        return Response({'error': 'No votes have been cast yet.'}, status=status.HTTP_400_BAD_REQUEST)
 
     round_results = [dict(vote_count)]
     total_votes = sum(vote_count.values())
@@ -153,38 +167,52 @@ def vote_results(request):
                 }, status=status.HTTP_200_OK)
         
         # Find the candidate with the least votes
-        min_votes = min(vote_count.values())
-        eliminated_candidates = [candidate for candidate, count in vote_count.items() if count == min_votes]
-        
-        # If all candidates have the same votes, it's a tie
-        if len(eliminated_candidates) == len(vote_count):
+        if not vote_count:
             return Response({
-                'result': 'tie',
+                'result': 'No votes have been cast or all candidates have been eliminated.',
                 'round': round_number,
                 'vote_counts': round_results,
                 'final_votes': vote_count
             }, status=status.HTTP_200_OK)
-        
+
+        min_votes = min(vote_count.values())
+        eliminated_candidates = [candidate for candidate, count in vote_count.items() if count == min_votes]
+
         # Eliminate the candidate with the least votes and redistribute their votes
         for eliminated_candidate in eliminated_candidates:
-            eliminated_candidate_preferences = Preference.objects.filter(candidate__description=eliminated_candidate, vote=vote)
+            eliminated_candidate_preferences = Preference.objects.filter(candidate__description=eliminated_candidate, candidate__vote=vote)
             for preference in eliminated_candidate_preferences:
-                next_preference = Preference.objects.filter(voter=preference.voter, vote=vote, rank=preference.rank + 1).first()
+                next_preference = Preference.objects.filter(voter=preference.voter, candidate__vote=vote, rank=preference.rank + 1).first()
                 if next_preference:
                     vote_count[next_preference.candidate.description] += 1
-            
+
             # Remove the eliminated candidate from the count
             del vote_count[eliminated_candidate]
-        
+
+        # If all remaining candidates have the same votes, declare the candidate with the most first-round votes as the winner
+        if len(eliminated_candidates) == len(vote_count):
+            max_first_round_votes = max(round_results[0].values())
+            winner = [candidate for candidate, count in round_results[0].items() if count == max_first_round_votes][0]
+            return Response({
+                'winner': winner,
+                'round': round_number,
+                'vote_counts': round_results,
+                'final_votes': vote_count
+            }, status=status.HTTP_200_OK)
+
         round_number += 1
         round_results.append(dict(vote_count))
 
     return Response({
-        'result': 'tie',
+        'result': 'No clear winner found after all rounds.',
         'round': round_number,
         'vote_counts': round_results,
         'final_votes': vote_count
     }, status=status.HTTP_200_OK)
+
+
+
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -241,15 +269,17 @@ def fetch_profiles(request):
 @permission_classes([IsAuthenticated])
 def fetch_candidates(request):
     vote_id = request.data.get('vote_id')
-    print('*****************************************************', request.data['vote_id'])
-    try:
-        vote = get_object_or_404(Vote, id=vote_id)
-        candidates = Candidate.objects.filter(vote=vote)
-        print('**************************************************************', candidates)
-        serializers = CandidateSerializer(candidates, many=True)
-        return Response(serializers.data)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    if not vote_id:
+        return Response({'error': 'vote_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    vote = get_object_or_404(Vote, id=vote_id)
+    candidates = Candidate.objects.filter(vote=vote)
+    
+    if not candidates.exists():
+        return Response([], status=status.HTTP_200_OK)
+
+    serializer = CandidateSerializer(candidates, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
