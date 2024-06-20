@@ -50,10 +50,12 @@ def create_user(request):
             return Response({'error': 'FriendsGroup with id 1 does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         profile = Profile.objects.create(
-            user=user,
-            friends_group=friends_group
+            user=user
         )
         profile.save()
+
+        friends_group.members.add(profile)
+        friends_group.save()
 
         profile_serialized = ProfileSerializer(profile)
         return Response(profile_serialized.data, status=status.HTTP_201_CREATED)
