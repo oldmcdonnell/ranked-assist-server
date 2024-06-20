@@ -94,6 +94,15 @@ def list_my_groups(request):
     serializer = FriendsGroupSerializer(groups, many=True)
     return Response(serializer.data)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def all_user_group(request):
+    group = FriendsGroup.objects.get(id=1)
+    serializers = FriendsGroupSerializer(group)
+    return Response(serializers.data)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_vote(request):

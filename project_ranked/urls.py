@@ -39,6 +39,7 @@ urlpatterns = [
     path('add-profile-to-group/<int:group_id>/', add_profile_to_group, name='add_profile_to_group'),
     path('list-friend-groups/', list_friend_groups, name='list_friend_groups'),
     path('list-my-groups/', list_my_groups, name='list_my_groups'),
+    path('all-user-group/', all_user_group, name='all_user_group'),
 
     #PROFILES
     path('profile/', get_profile, name='get_profile'),
