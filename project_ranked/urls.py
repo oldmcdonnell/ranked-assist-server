@@ -31,7 +31,8 @@ urlpatterns = [
     #CANDIDATES
     path('add-candidate-to-vote/<int:vote_id>/', add_candidate_to_vote, name='add_candidate_to_vote'),
     path('fetch-candidates/', fetch_candidates, name='fetch_candidates'),
-    path('create-candidate/', create_candidate),
+    path('create-candidate/', create_candidate, name='create_candidate'),
+    path('update-candidate/<int:candidate_id>/', update_candidate, name='update_candidate'),
     
 
     # GROUPS

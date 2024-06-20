@@ -186,34 +186,25 @@ def vote_results(request):
         'final_votes': vote_count
     }, status=status.HTTP_200_OK)
 
-@api_view(['PUT'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_candidate(request):
-    vote = get_object_or_404(Vote, id=request.data['vote_id'])
-    print('vote ID ', request.data['vote_id'])
-    if 'candidates' in request.data:
-        new_candidates = request.data['candidates']
-        updated_candidates = []
-        for candidate_data in new_candidates:
-            candidate, created = Candidate.objects.update_or_create(
-                vote=vote,
-                id=candidate_data.get('id'),
-                defaults={'description': candidate_data['description']}
-            )
-            updated_candidates.append(candidate)
-        
-        serializer = CandidateSerializer(updated_candidates, many=True)
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-    elif 'vote_id' in request.data and 'description' in request.data:
-        candidate = Candidate.objects.create(
-            vote=vote,
-            description=request.data['description']
-        )
-        serializer = CandidateSerializer(candidate)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response({'error': 'Invalid data provided'}, status=status.HTTP_400_BAD_REQUEST)
+    vote_id = request.data.get('vote_id')
+    description = request.data.get('description')
+    vote = get_object_or_404(Vote, id=vote_id)
+    candidate = Candidate.objects.create(vote=vote, description=description)
+    serializer = CandidateSerializer(candidate)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_candidate(request, candidate_id):
+    candidate = get_object_or_404(Candidate, id=candidate_id)
+    candidate.description = request.data.get('description', candidate.description)
+    candidate.save()
+    serializer = CandidateSerializer(candidate)
+    return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 @api_view(['POST'])
