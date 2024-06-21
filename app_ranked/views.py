@@ -199,7 +199,7 @@ def vote_results(request):
                 if next_preference:
                     vote_count[next_preference.candidate.description] += 1
 
-            # Remove the eliminated candidate from the count
+            # Remove the eliminated candidate from the count, add to the next preference before next round
             del vote_count[eliminated_candidate]
 
         # If all remaining candidates have the same votes, declare the candidate with the most first-round votes as the winner
