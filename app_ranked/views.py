@@ -63,14 +63,25 @@ def create_user(request):
         print('Exception:', str(e))
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST']) 
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_friend_group(request):
+    user_profile = Profile.objects.get(user=request.user)
+    members = request.data.get('members', [])
+
     friend_group = FriendsGroup.objects.create(
         title=request.data.get('title'),
         note=request.data.get('note', '')
     )
+    
+    friend_group.members.add(user_profile)
+    # Add members to the many-to-many field
+    for member_id in members:
+        profile = Profile.objects.get(id=member_id)
+        friend_group.members.add(profile)
+    
     friend_group.save()
+    
     serializer = FriendsGroupSerializer(friend_group)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
