@@ -151,7 +151,7 @@ def vote_results(request):
     if not preferences.exists():
         print('preferences  ',preferences.first())
         return Response({
-            'winner': 'waiting for voters',
+            'winner': candidate,
             'round': 1,
             'vote_counts': round_results,
             'final_votes': 1,
