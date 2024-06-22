@@ -346,10 +346,14 @@ def create_preference(request):
     
     if 'rank' in request.data:
         rank_data = request.data['rank']
+        existing_preferences = Preference.objects.filter(voter=voter, vote=vote)
+        
+        if existing_preferences.exists():
+            return Response({'message': 'You have already voted.'}, status=status.HTTP_200_OK)
+        
         updated_rank = []
         
         for preference_data in rank_data:
-            print('*************************preference data******************', preference_data)
             candidate_id = preference_data.get('candidate_id')
             rank = preference_data.get('rank')
             
@@ -357,12 +361,11 @@ def create_preference(request):
                 return Response({'error': 'candidate_id and rank are required for each preference'}, status=status.HTTP_400_BAD_REQUEST)
             
             candidate = get_object_or_404(Candidate, id=candidate_id, vote=vote)
-            print('****************various opbjects********', voter, candidate, vote, rank)
-            preference, created = Preference.objects.update_or_create(
+            preference = Preference.objects.create(
                 voter=voter,
                 candidate=candidate,
                 vote=vote,
-                rank = rank,
+                rank=rank,
             )
             updated_rank.append(preference)
         
@@ -370,6 +373,7 @@ def create_preference(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
         return Response({'error': 'No rank data provided'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['PUT'])
