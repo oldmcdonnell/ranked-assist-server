@@ -44,24 +44,23 @@ def create_user(request):
         user.save()
 
         try:
-            friends_group = FriendsGroup.objects.get(id=1)
+            friends_group = FriendsGroup.objects.get(id=2) #this needs to be id=2 for website deploy to work
             print('FriendsGroup found:', friends_group)
         except FriendsGroup.DoesNotExist:
             return Response({'error': 'FriendsGroup with id 1 does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         profile = Profile.objects.create(
-            user=user
+            user=user,
+            friends_group=friends_group
         )
         profile.save()
-
-        friends_group.members.add(profile)
-        friends_group.save()
 
         profile_serialized = ProfileSerializer(profile)
         return Response(profile_serialized.data, status=status.HTTP_201_CREATED)
     except Exception as e:
         print('Exception:', str(e))
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -113,7 +112,7 @@ def list_my_groups(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def all_user_group(request):
-    group = FriendsGroup.objects.get(id=1)
+    group = FriendsGroup.objects.get(id=2)#this has to be 2 deployed on the web and 1 locally
     serializers = FriendsGroupSerializer(group)
     return Response(serializers.data)
 
@@ -264,6 +263,13 @@ def create_candidate(request):
     candidate = Candidate.objects.create(vote=vote, description=description)
     serializer = CandidateSerializer(candidate)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_candidate(request, candidate_id):
+    candidate = get_object_or_404(Candidate, id=candidate_id)
+    candidate.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['PUT'])
